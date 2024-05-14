@@ -76,24 +76,33 @@ def get_all_plays(url):
     return data
 
 def extract_content(contenu_abs_url): 
-    contenu = []
-    r = requests.get(contenu_abs_url)
-    if r.status_code == 200:
-        html_content = r.content
-        soup = BeautifulSoup(html_content, 'html.parser')
-        texte = soup.find('div', {'id' : 'texteTheatre'})
-        contenu.append(texte) 
-    else : 
-        print("Une erreur s'est produite lors de la récupération du contenu.")
+    style = ""
+    contenu = ""
 
-    return contenu
+    r = requests.get(contenu_abs_url)
+
+    if r.status_code == 200:
+        xml_content = r.content
+        soup = BeautifulSoup(xml_content, 'xml')
+        #extraire le type (style)
+        source_desc = soup.find('SourceDesc')
+        if source_desc:
+            type_tag = source_desc.find('type')
+            if type_tag:
+                style = type_tag.get_text()
+        #extraire le texte de la pièce
+        texte = soup.find('body')     
+        contenu += texte.get_text(separator='\n').strip()  
+        
+    return style, contenu
 
 
 ##__MAIN__##
 def main(): 
+    #récupération et sauvegarde
     url = "https://www.theatre-classique.fr/pages/programmes/PageEdition.php"
-    result = get_all_plays(url)
-    print(result)
+    data = get_all_plays(url)
+    #save_to_csv(data)
 
 if __name__ == "__main__":
     main()
