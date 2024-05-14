@@ -3,6 +3,9 @@ from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+import csv
+import pandas as pd
+from datasets import Dataset
 
 
 ##__DATACLASSES__##
@@ -35,6 +38,34 @@ def verif_valid_url(url):
         print(f"Erreur {r.status_code}.")
         return None
     
+
+def extract_content(contenu_abs_url): 
+    """
+    Extrait le style (type) et le contenu de la pièce de théâtre à partir de l'URL donnée.
+    Argument : contenu_abs_url (str) qui correspond aux url amenant à la page avec le contenu de la pièce de théâtre.
+    Sortie : renvoie un tuple de deux éléments 
+            - style (str): récupère le style de la pièce (prose, vers etc.) extrait de la balise <type> dans <SourceDesc>.
+            - contenu (str): récupère le texte complet de la pièce de théâtre (extrait de la balise <body>).
+    """
+    style = ""
+    contenu = ""
+
+    r = requests.get(contenu_abs_url)
+    if r.status_code == 200:
+        xml_content = r.content
+        soup = BeautifulSoup(xml_content, 'xml')
+        #extraire le type (style)
+        source_desc = soup.find('SourceDesc')
+        if source_desc:
+            type_tag = source_desc.find('type')
+            if type_tag:
+                style = type_tag.get_text()
+        #extraire le texte de la pièce
+        texte = soup.find('body')     
+        contenu += texte.get_text(separator='\n').strip()  
+        
+    return style, contenu
+
 
 def get_all_plays(url): 
     """
@@ -75,32 +106,30 @@ def get_all_plays(url):
 
     return data
 
-def extract_content(contenu_abs_url): 
-    """
-    Extrait le style (type) et le contenu de la pièce de théâtre à partir de l'URL donnée.
-    Argument : contenu_abs_url (str) qui correspond aux url amenant à la page avec le contenu de la pièce de théâtre.
-    Sortie : renvoie un tuple de deux éléments 
-            - style (str): récupère le style de la pièce (prose, vers etc.) extrait de la balise <type> dans <SourceDesc>.
-            - contenu (str): récupère le texte complet de la pièce de théâtre (extrait de la balise <body>).
-    """
-    style = ""
-    contenu = ""
 
-    r = requests.get(contenu_abs_url)
-    if r.status_code == 200:
-        xml_content = r.content
-        soup = BeautifulSoup(xml_content, 'xml')
-        #extraire le type (style)
-        source_desc = soup.find('SourceDesc')
-        if source_desc:
-            type_tag = source_desc.find('type')
-            if type_tag:
-                style = type_tag.get_text()
-        #extraire le texte de la pièce
-        texte = soup.find('body')     
-        contenu += texte.get_text(separator='\n').strip()  
+def save_to_csv(data):
+    """
+    Cette fonction enregistre les données d'un objet Corpus (obtenues précédement) dans un fichier CSV.
+    """
+    dico = []
+    for drama in data : 
+        dico.append({
+        "auteur" : drama.auteur, 
+        "titre" : drama.titre, 
+        "date" : drama.date, 
+        "genre" : drama.genre, 
+        "style" : drama.style,
+        "contenu" : drama.contenu, 
+        })
+    
+    with open ("results.csv", "w", newline='', encoding='utf-8') as csvfile : 
+        colonnes = ["auteur", "titre", "date", "genre", "style", "contenu"]
+        writer = csv.DictWriter(csvfile, fieldnames=colonnes , delimiter = "|")
+        writer.writeheader()
         
-    return style, contenu
+        for i in dico : 
+            writer.writerow(i)
+        print("Données enregistrées dans results.csv")
 
 
 ##__MAIN__##
@@ -108,7 +137,15 @@ def main():
     #récupération et sauvegarde
     url = "https://www.theatre-classique.fr/pages/programmes/PageEdition.php"
     data = get_all_plays(url)
-    #save_to_csv(data)
+    save_to_csv(data)
+
+    #lire le csv
+    df = pd.read_csv("results.csv", delimiter="|")
+    print(df.head())
+
+    #convertir le DataFrame Pandas en Dataset 
+    dataset = Dataset.from_pandas(df)
+    print(dataset)
 
 if __name__ == "__main__":
     main()
