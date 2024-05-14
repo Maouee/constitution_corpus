@@ -76,11 +76,17 @@ def get_all_plays(url):
     return data
 
 def extract_content(contenu_abs_url): 
+    """
+    Extrait le style (type) et le contenu de la pièce de théâtre à partir de l'URL donnée.
+    Argument : contenu_abs_url (str) qui correspond aux url amenant à la page avec le contenu de la pièce de théâtre.
+    Sortie : renvoie un tuple de deux éléments 
+            - style (str): récupère le style de la pièce (prose, vers etc.) extrait de la balise <type> dans <SourceDesc>.
+            - contenu (str): récupère le texte complet de la pièce de théâtre (extrait de la balise <body>).
+    """
     style = ""
     contenu = ""
 
     r = requests.get(contenu_abs_url)
-
     if r.status_code == 200:
         xml_content = r.content
         soup = BeautifulSoup(xml_content, 'xml')
