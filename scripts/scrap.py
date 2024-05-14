@@ -11,17 +11,35 @@ class Drama :
     titre : str
     date : str
     genre : str
+    style : str
     contenu : str   
-    url : str
     
 class Corpus : 
     items : list[Drama]
 
 
 ##__FONCTIONS__##  
+def verif_valid_url(url):
+    """
+    Cette fonction permet de vérifier si le lien est valide. Il ne récupère que les status 200. 
+    Argument : une url (str) correspondant à l'url à vérifier. L'url est à préciser dans le main.
+    Sorties : Seuls les liens valides seront transformés en outils "BeautifulSoup". Sinon renvoie None.
+    """
+    r = requests.get(url)
+    if r.status_code == 200 : 
+        print(r.status_code)
+        soup = BeautifulSoup(r.content, "html.parser")
+        return soup
+    else : 
+        print(f"Erreur {r.status_code}.")
+        return None
+    
+
 def get_all_plays(url): 
     """
     Récupération de toutes les urls utiles et transformation de toutes les urls en urls absolues.
+    Argument : url (str): Une chaîne de caractères représentant l'URL de la page principale.
+    Sortie : list: Une liste d'objets Drama contenant les informations sur chaque pièce de théâtre.
     """
     data = []
     html = url
