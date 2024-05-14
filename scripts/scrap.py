@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 ##__DATACLASSES__##
@@ -42,21 +43,21 @@ def get_all_plays(url):
     Sortie : list: Une liste d'objets Drama contenant les informations sur chaque pièce de théâtre.
     """
     data = []
-    html = url
+    html = verif_valid_url(url)
 
     table = html.find("table", {"id": "table_AA", "class": "TF"}) # recherche tous les liens dans le tableau 
     rows = table.find_all("tr") #récupérer les lignes du tableau  
 
-    for row in rows[1:]:  # ignorer l'en-tête
+    for row in tqdm(rows[1:], desc="Traitement des différentes pièces"):  # barre d'avancement + ignorer l'en-tête
         case = row.find_all("td") #récupérer les cellules
     
         auteur_cell = case[0]
         titre_cell = case[1]
         date_cell = case[2]
         genre_cell = case[3]
-        contenu_cell = case[4].find('a')['href']
+        contenu_cell = case[6].find('a')['href']
 
-        if contenu_cell.startswith("http"): # si http alors url absolue donc ok on append
+        if contenu_cell.startswith("http"): # si commence par http alors url absolue donc ok on append
             contenu_abs_url = contenu_cell
         else : # si non on concatène l'url de base avec l'url relative récupérée pour avoir que des urls absolues
             base_url = "https://www.theatre-classique.fr/pages/programmes/"
@@ -66,14 +67,15 @@ def get_all_plays(url):
         titre = titre_cell.text.strip()
         date = date_cell.text.strip()
         genre = genre_cell.text.strip()
-        contenu_final = extract_contenu(contenu_abs_url)
+        style, contenu_final = extract_content(contenu_abs_url)
 
-        drama_items = Drama(auteur=auteur, titre=titre, date=date, genre=genre, contenu=contenu_final, url=url)
+        drama_items = Drama(auteur=auteur, titre=titre, date=date, genre=genre, style=style, contenu=contenu_final)
         data.append(drama_items)
-          
+        print(f"Pièce ajoutée: {titre}")
+
     return data
 
-def extract_contenu(contenu_abs_url): 
+def extract_content(contenu_abs_url): 
     contenu = []
     r = requests.get(contenu_abs_url)
     if r.status_code == 200:
