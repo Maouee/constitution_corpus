@@ -1,3 +1,11 @@
+"""
+Ce script permet de scrapper le contenu du site : `https://www.theatre-classique.fr/pages/programmes/PageEdition.php` afin de récupérer
+pour chaque pièce de théâtre : l'auteur, le titre, la date et le genre ainsi que le texte de chaque pièce de théâtre (fonction extract_content())
+et le style d'écriture (fonction extract_content()). 
+On obtient en sortie un fichier résultats.csv avec les informations précédantes pour chaques pièces.
+On peut lire le fichier .csv avec la bibliothèque pandas afin que ce soit plus agréable visuellement. 
+"""
+
 ##__IMPORTS__##
 from dataclasses import dataclass
 import requests
@@ -122,7 +130,7 @@ def save_to_csv(data):
         "contenu" : drama.contenu, 
         })
     
-    with open ("results.csv", "w", newline='', encoding='utf-8') as csvfile : 
+    with open ("../../results.csv", "w", newline='', encoding='utf-8') as csvfile : 
         colonnes = ["auteur", "titre", "date", "genre", "style", "contenu"]
         writer = csv.DictWriter(csvfile, fieldnames=colonnes , delimiter = "|")
         writer.writeheader()
@@ -140,7 +148,7 @@ def main():
     save_to_csv(data)
 
     #lire le csv
-    df = pd.read_csv("results.csv", delimiter="|")
+    df = pd.read_csv("../../results.csv", delimiter="|")
     print(df.head())
 
     #convertir le DataFrame Pandas en Dataset 
