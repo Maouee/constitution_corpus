@@ -4,6 +4,8 @@ pour chaque pièce de théâtre : l'auteur, le titre, la date et le genre ainsi 
 et le style d'écriture (fonction extract_content()). 
 On obtient en sortie un fichier résultats.csv avec les informations précédantes pour chaques pièces.
 On peut lire le fichier .csv avec la bibliothèque pandas afin que ce soit plus agréable visuellement. 
+
+Le script demande certaines librairies qu'il faut importer : bs4, pandas, tqdm, datasets.
 """
 
 ##__IMPORTS__##
@@ -14,6 +16,8 @@ from tqdm import tqdm
 import csv
 import pandas as pd
 from datasets import Dataset
+import matplotlib.pyplot as plt
+import os
 
 
 ##__DATACLASSES__##
@@ -140,6 +144,22 @@ def save_to_csv(data):
         print("Données enregistrées dans results.csv")
 
 
+def plot_longueur_textes(textes_longueur, output_dir):
+    """
+    Trace un diagramme en plots de la distribution des longueurs des textes.
+    Argument: textes_longueur -> liste des longueurs des textes (en nombre de mots) et dossier dans lequel seront téléchargé les visuels. 
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.figure(figsize=(10, 6))
+    plt.hist(textes_longueur, bins=20, color='green', edgecolor='black')
+    plt.title("Diagramme en plots des longueurs des textes")
+    plt.xlabel("Longueur des textes (nombre de mots)")
+    plt.ylabel("Fréquence")
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, "textes_longueur_plots.png"))
+    plt.show()
+
 ##__MAIN__##
 def main(): 
     #récupération et sauvegarde
@@ -154,6 +174,13 @@ def main():
     #convertir le DataFrame Pandas en Dataset 
     dataset = Dataset.from_pandas(df)
     print(dataset)
+
+    #visualisation
+    textes_longueur = []
+    for drama in data:
+        length = len(drama.contenu.split())
+        textes_longueur.append(length)
+    plot_longueur_textes(textes_longueur, output_dir="../figures")
 
 if __name__ == "__main__":
     main()
