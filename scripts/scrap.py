@@ -18,6 +18,7 @@ import pandas as pd
 from datasets import Dataset
 import matplotlib.pyplot as plt
 import os
+from collections import Counter
 
 
 ##__DATACLASSES__##
@@ -146,8 +147,10 @@ def save_to_csv(data):
 
 def plot_longueur_textes(textes_longueur, output_dir):
     """
-    Trace un diagramme en plots de la distribution des longueurs des textes.
-    Argument: textes_longueur -> liste des longueurs des textes (en nombre de mots) et dossier dans lequel seront téléchargé les visuels. 
+    Trace un diagramme en barre de la distribution des longueurs des textes. Le graphique est sauvegardé dans un fichier PNG dans le 
+    répertoire spécifié par output_dir, et est également affiché à l'écran.
+    Arguments: textes_longueur -> liste des longueurs des textes (en nombre de mots) et output_dir, le chemin du répertoire de sortie où enregistrer 
+    l'image du graphique.
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -159,6 +162,28 @@ def plot_longueur_textes(textes_longueur, output_dir):
     plt.grid(True)
     plt.savefig(os.path.join(output_dir, "textes_longueur_plots.png"))
     plt.show()
+
+def plot_freq_mot(count_mot, output_dir):
+    """
+    Trace un diagramme en barre représentant les 20 mots les plus fréquents et leurs fréquences associées, à partir des données contenues 
+    dans l'objet Counter word_counts. Le graphique est sauvegardé dans un fichier PNG dans le répertoire spécifié par output_dir, 
+    et est également affiché à l'écran.
+    Arguments : count_mot -> un objet Counter contenant les comptages de mots et output_dir, le chemin du répertoire de sortie où enregistrer 
+    l'image du graphique.
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    word_freq = count_mot.most_common(20)
+    words, counts = zip(*word_freq)
+    plt.figure(figsize=(12, 8))
+    plt.bar(words, counts, color='blue')
+    plt.title("Top 20 des mots les plus fréquents")
+    plt.xlabel("Mots")
+    plt.ylabel("Fréquence")
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, "textes_longueur_plots.png"))
+    plt.show()
+
 
 ##__MAIN__##
 def main(): 
@@ -175,12 +200,19 @@ def main():
     dataset = Dataset.from_pandas(df)
     print(dataset)
 
-    #visualisation
+    #Visualisation
+    #calcul des longueurs des textes
     textes_longueur = []
     for drama in data:
         length = len(drama.contenu.split())
         textes_longueur.append(length)
     plot_longueur_textes(textes_longueur, output_dir="../figures")
+    #calcul de la fréquence des mots
+    count_mot = Counter()
+    for drama in data:
+        count_mot.update(drama.contenu.split())
+    plot_freq_mot(count_mot, output_dir="../figures")
+
 
 if __name__ == "__main__":
     main()
